@@ -1,9 +1,9 @@
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
-http.createServer(function (request, response) {
-    console.log('request starting...');
-	
+var sys = require('sys');
+http.createServer(function (request, response) {   
+	console.log(request);
 	var filePath = '.' + request.url;
 	if (filePath == './')
 		filePath = './index.htm';
@@ -17,8 +17,16 @@ http.createServer(function (request, response) {
 		case '.css':
 			contentType = 'text/css';
 			break;
-	}
+	}	
+		
+	var data = '';
+	request.on('data', function(chunk) { 
+		data += chunk; 
+		sys.puts(data);
+	});
 	
+	
+
 	path.exists(filePath, function(exists) {
 	
 		if (exists) {

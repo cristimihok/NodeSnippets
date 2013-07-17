@@ -15,9 +15,11 @@
 			} else {// code for IE6, IE5
 				xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 			}
+			var obj = {name: "cristi", age: 21};
+			var jsonObj = JSON.stringify(obj);
 			xmlhttp.onreadystatechange=cfunc;
 			xmlhttp.open("POST",url,true);
-			xmlhttp.send("aaaaaaaaaaaaaaaaaaaaaaaaaasdasdkjaghsefojk");
+			xmlhttp.send(jsonObj);
 		}
 				
 		function myFunction() {
