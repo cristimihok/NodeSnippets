@@ -102,14 +102,15 @@ var deleteHandler = function ( e ){
 			for (i = 0; i < selectedItems.length; ++i){
 				listTodo.removeChild(selectedItems[i]);
 			}
+			if (!listTodo.children.length){
+				toggleBotoomLI('hidden');
+				newTodo.value = "";
+			}
+			remainingItemsHandler();
 		}
 	});
 
-	if (!listTodo.children.length){
-		toggleBotoomLI('hidden');
-		newTodo.value = "";
-	}
-	remainingItemsHandler();
+	
 }
 
 //sets the state of checkboxes from TODO list <ul>
