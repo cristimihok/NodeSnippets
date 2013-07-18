@@ -5,10 +5,11 @@ var selAllBtn = document.getElementById('btn1');
 var inputTodo = document.getElementById('newTodo');
 var bottomListItem = document.getElementById('bottomListItem');
 var remainingTxt = document.getElementById('remainingTxt');
+var body = document.getElementsByTagName("body")[0];
 
 var selectState = false;
 //creates a new list item <li>
-function createListItem(content){
+function createListItem ( content ){
 	var newListItem = document.createElement('LI');
 	var newListCheckBox = document.createElement('INPUT');
 	newListCheckBox.type = 'checkbox';
@@ -20,7 +21,7 @@ function createListItem(content){
 }
 
 //creates the DIV that contains the list item
-function createDiv(content){
+function createDiv ( content ){
 	var newDiv = document.createElement('DIV');			
 	var newListItem = createListItem(content);	
 	newDiv.id = 'listDiv';
@@ -40,36 +41,37 @@ function getSelectedItemsList () {
 }
 
 //sets the state for the checkboxes from TODO list
-function toggleBotoomLI(state){
+function toggleBotoomLI ( state ){
 	bottomListItem.style.visibility = state;
 }
 
 //returns the item number from TODO list
-function getRemainingItems(){
+function getRemainingItems (){
 	var remainingItems = listTodo.children.length;
 	return remainingItems;
 }
 
-function postTodo(url, data, cfunc) {
+function loadRequest ( reqMethod, url, data, cfunc ) {
 	// code for IE7+, Firefox, Chrome, Opera, Safari
 	if (window.XMLHttpRequest) {
-		xmlhttp=new XMLHttpRequest();
+		xmlhttp = new XMLHttpRequest();
 	// code for IE6, IE5
 	} else {
-		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 	}	
-	xmlhttp.onreadystatechange=cfunc;
-	xmlhttp.open("POST", url, true);
+	xmlhttp.onreadystatechange = cfunc;
+	xmlhttp.open(reqMethod, url, true);
 	xmlhttp.send(data);
 }
 
 //adds a new TODO item in <ul>
-var addHandler = function(e){
+var addHandler = function ( e ){
 	if (inputTodo.value){
+		var data = inputTodo.value;
 		if (e.keyCode == 13){				
-			postTodo(null, inputTodo.value, function (){
+			loadRequest("POST", null, data, function (){
 				if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-					var newDiv = createDiv(xmlhttp.responseText);
+					var newDiv = createDiv(data);
 					listTodo.appendChild(newDiv);
 					remainingItemsHandler();
 				}
@@ -81,12 +83,28 @@ var addHandler = function(e){
 }
 
 //deletes the selected items from list <ul>
-var deleteHandler = function(e){
+var deleteHandler = function ( e ){
 	var i;
+	var contentSelItems = Array();
 	var selectedItems = getSelectedItemsList();
+	
 	for (i = 0; i < selectedItems.length; ++i){
-		listTodo.removeChild(selectedItems[i]);
+		var textNode = selectedItems[i].children[0].children[0].nextSibling.nodeValue;
+	 	contentSelItems.push(textNode);
+	 	//console.log(textNode);
 	}
+
+	var jselectedItems = JSON.stringify(contentSelItems);
+
+	loadRequest("DELETE", null, jselectedItems, function () {
+		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+			console.log(selectedItems);
+			for (i = 0; i < selectedItems.length; ++i){
+				listTodo.removeChild(selectedItems[i]);
+			}
+		}
+	});
+
 	if (!listTodo.children.length){
 		toggleBotoomLI('hidden');
 		newTodo.value = "";
@@ -95,7 +113,7 @@ var deleteHandler = function(e){
 }
 
 //sets the state of checkboxes from TODO list <ul>
-var selectAllHandler = function (e) {
+var selectAllHandler = function ( e ) {
 	if (selectState){
 		selectState = false;
 	}else{
@@ -107,11 +125,29 @@ var selectAllHandler = function (e) {
 }
 
 
-var remainingItemsHandler = function (e) {
+var remainingItemsHandler = function ( e ) {
 	remainingTxt.innerHTML = 'remaining: ' + getRemainingItems();
 }
 
+var initHandler = function ( e ) {	
+	loadRequest("GET", "null", null, function () {
+		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+			var list = JSON.parse(xmlhttp.responseText);			
+			if (list.length){
+				for ( var i = 0; i < list.length; i++ ) {
+					var newDiv = createDiv(list[i]);
+					listTodo.appendChild(newDiv);
+				}
+				remainingItemsHandler();
+				newTodo.value = "";
+				toggleBotoomLI('visible');
+			}
+		}
+	});
+}
+
 //adding listeners to elements from DOM	
+body.addEventListener("load", initHandler(), false);
 inputTodo.addEventListener('keypress', addHandler, false);
 delBtn.addEventListener('click', deleteHandler, false);
 selAllBtn.addEventListener('click', selectAllHandler, false);
