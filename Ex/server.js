@@ -3,7 +3,7 @@ var fs = require('fs');
 var path = require('path');
 var sys = require('sys');
 
-function getContentType (extName){
+function getContentType ( extName ){
 	var contentType = 'text/html';
 	switch (extName) {
 		case '.js':
@@ -16,10 +16,10 @@ function getContentType (extName){
 	return contentType;	
 }
 
-function sendContent (response, filePath, contentType) {
-	path.exists(filePath, function (exists) {	
+function sendContent ( response, filePath, contentType ) {
+	path.exists(filePath, function ( exists ) {	
 		if ( exists ) {
-			fs.readFile(filePath, function (error, content) {
+			fs.readFile(filePath, function ( error, content ) {
 				if ( error ) {
 					response.writeHead(500);
 					response.end();
@@ -37,32 +37,87 @@ function sendContent (response, filePath, contentType) {
 	});
 }
 
+function sendList (response, list) {
+	response.writeHead(200, { 'Content-Type': "text/plain" });
+	response.end(list, 'utf-8');
+}
+
+function deleteSelectedData (selectedData) {
+	for (var i = 0; i < todoList.length; i++){
+		if ( include(selectedData, todoList[i]) ){
+			todoList.splice(i, 1);
+		}
+	}
+}
+
+function include (array, elem){
+	for(var i = 0; i < array.length; i++) {
+        if (array[i] == elem) 
+        	return true;
+    }
+}
+
 var todoList = new Array();
 
-http.createServer(function (request, response) {  	
+http.createServer(function ( request, response ) {  	
 
 	if ( request.method == 'GET' ){
 		console.log("GET");
+		console.log("url:" + request.url);
 		console.log(todoList);
-		var filePath = request.url;		
-		var contentType = getContentType(path.extname(filePath));
-		sys.puts(contentType);
-		sendContent(response, filePath, contentType);
+		if (request.url != "/Ex/null"){
+			var filePath = request.url;		
+			var contentType = getContentType(path.extname(filePath));
+			sys.puts(contentType);
+			sendContent(response, filePath, contentType);
+		} else {
+			jtodoList = JSON.stringify(todoList);
+			sendList(response, jtodoList);
+		}		
 	}
 	
 	if ( request.method == 'POST' ){
 		console.log("POST");
 		var data = '';
-		request.on('data', function (chunk) { 
+		request.on('data', function ( chunk ) { 
 			data += chunk; 
 			sys.puts(data);		
 		});	
 		
 		request.on('end', function () {
-			todoList.push(data);
-			response.writeHead(200, { 'Content-Type': contentType });
-			response.end(data, 'utf-8');
+			if ( data ){
+				todoList.push(data);
+				response.writeHead(200);
+				response.end();
+			} else {
+				response.writeHead(500);
+				response.end();
+			}			
 		});
+	}
+
+	if ( request.method == 'DELETE'){
+		console.log("DELETE");
+		
+		var data = '';
+		request.on('data', function ( chunk ) { 
+			data += chunk; 		
+		});
+
+		request.on('end', function () {
+			if ( data ){
+				//console.log("before delete" + todoList);
+				var selectedData = JSON.parse(data);
+				deleteSelectedData(selectedData);
+				//console.log("after delete" + todoList);
+				response.writeHead(200);
+				response.end();
+			} else {
+				response.writeHead(500);
+				response.end();
+			}			
+		});
+
 	}		
 	
 }).listen(8080);
